@@ -8,7 +8,7 @@ import 'package:simple_live_app/app/sites.dart';
 import 'package:simple_live_app/models/account/bilibili_user_info_page.dart';
 import 'package:simple_live_app/requests/http_client.dart';
 import 'package:simple_live_app/services/local_storage_service.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 
 class BiliBiliAccountService extends GetxService {
   static BiliBiliAccountService get instance =>
@@ -55,9 +55,8 @@ class BiliBiliAccountService extends GetxService {
   }
 
   void setSite() {
-    var site = (Sites.allSites[Constant.kBiliBili]!.liveSite as BiliBiliSite);
-    site.userId = uid;
-    site.cookie = cookie;
+    var site = (Sites.allSites[Constant.kBiliBili]!.liveSite as BilibiliSite);
+    site.setCookies(cookie);
   }
 
   void setCookie(String cookie) {

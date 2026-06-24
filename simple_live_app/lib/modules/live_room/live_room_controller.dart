@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:canvas_danmaku/canvas_danmaku.dart';
@@ -27,7 +28,7 @@ import 'package:simple_live_app/services/history_service.dart';
 import 'package:simple_live_app/src/rust/api/danmaku_mask.dart';
 import 'package:simple_live_app/widgets/desktop_refresh_button.dart';
 import 'package:simple_live_app/widgets/follow_user_item.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -36,7 +37,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   final Site pSite;
   final String pRoomId;
   late LiveDanmaku liveDanmaku;
-  late DanmakuMask rustDanmakuMask;
+  DanmakuMask? rustDanmakuMask;
 
 
   List<LiveMessage> danmakuBuffer = [];
@@ -170,11 +171,11 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
       final batchMessages = batch.map((e) => e.message).toList();
       final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final allowedResults = await rustDanmakuMask.allowListBatch(texts: batchMessages, nowMs: BigInt.from(nowMs));
+      final allowedResults = await rustDanmakuMask?.allowListBatch(texts: batchMessages, nowMs: BigInt.from(nowMs));
 
       final filteredBatch = <LiveMessage>[];
       for (int i = 0; i < batch.length; i++) {
-        if (allowedResults[i] == 1) {
+        if (allowedResults![i] == 1) {
           filteredBatch.add(batch[i]);
         }
       }
@@ -289,7 +290,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
   /// 接收到WebSocket信息
   void onWSMessage(LiveMessage msg) async {
-    if (msg.type == LiveMessageType.chat) {
+    if (msg.messageType == LiveMessageType.chat) {
       // 关键词屏蔽检查
       for (var keyword in AppSettingsController.instance.shieldList) {
         Pattern? pattern;
@@ -338,10 +339,10 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
           ),
         ]);
       }
-    } else if (msg.type == LiveMessageType.online) {
-      online.value = msg.data;
-    } else if (msg.type == LiveMessageType.superChat) {
-      superChats.add(msg.data);
+    } else if (msg.messageType == LiveMessageType.online) {
+      online.value = msg.metadata as int;
+    } else if (msg.messageType == LiveMessageType.superChat) {
+      superChats.add(LiveSuperChatMessage.fromJson( jsonDecode(msg.metadata!) as Map<String, dynamic>));
     }
   }
 
@@ -349,10 +350,10 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   void addSysMsg(String msg) {
     messages.add(
       LiveMessage(
-        type: LiveMessageType.chat,
+        messageType: LiveMessageType.chat,
         userName: "LiveSysMessage",
         message: msg,
-        color: LiveMessageColor.white,
+        color: LiveMessageColor.white(), id: '', userId: '', timeMillis: 0,
       ),
     );
   }
@@ -414,7 +415,10 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
         getPlayQualites();
         addSysMsg("开始连接弹幕服务器");
         initDanmau();
-        liveDanmaku.start(detail.value?.danmakuData);
+        liveDanmaku.start(
+          detail.value!.roomId,
+          danmakuData: detail.value!.danmakuData,
+        );
       }
       if (detail.value!.isRecord) {
         addSysMsg("当前主播未开播，正在轮播录像");
@@ -437,7 +441,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
     try {
       var playQualites =
-          await site.liveSite.getPlayQualites(detail: detail.value!);
+          await site.liveSite.getPlayQualities(detail: detail.value!);
 
       if (playQualites.isEmpty) {
         SmartDialog.showToast("无法读取播放清晰度");
@@ -584,7 +588,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   void getSuperChatMessage() async {
     try {
       var sc =
-          await site.liveSite.getSuperChatMessage(roomId: detail.value!.roomId);
+          await site.liveSite.getSuperChatMessages(roomId: detail.value!.roomId);
       superChats.addAll(sc);
     } catch (e) {
       Log.logPrint(e);
@@ -595,7 +599,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   /// 移除掉已到期的SC
   void removeSuperChats() async {
     var now = DateTime.now().millisecondsSinceEpoch;
-    superChats.removeWhere((x) => x.endTime.millisecondsSinceEpoch <= now);
+    superChats.removeWhere((x) => x.endTime <= now);
   }
 
   /// 添加历史记录
@@ -1025,23 +1029,23 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   void openNaviteAPP() async {
     var naviteUrl = "";
     var webUrl = "";
-    if (site.id == Constant.kBiliBili) {
-      naviteUrl = "bilibili://live/${detail.value?.roomId}";
-      webUrl = "https://live.bilibili.com/${detail.value?.roomId}";
-    } else if (site.id == Constant.kDouyin) {
-      var args = detail.value?.danmakuData as DouyinDanmakuArgs;
-      naviteUrl = "snssdk1128://webcast_room?room_id=${args.roomId}";
-      webUrl = "https://live.douyin.com/${args.webRid}";
-    } else if (site.id == Constant.kHuya) {
-      var args = detail.value?.danmakuData as HuyaDanmakuArgs;
-      naviteUrl =
-          "yykiwi://homepage/index.html?banneraction=https%3A%2F%2Fdiy-front.cdn.huya.com%2Fzt%2Ffrontpage%2Fcc%2Fupdate.html%3Fhyaction%3Dlive%26channelid%3D${args.subSid}%26subid%3D${args.subSid}%26liveuid%3D${args.subSid}%26screentype%3D1%26sourcetype%3D0%26fromapp%3Dhuya_wap%252Fclick%252Fopen_app_guide%26&fromapp=huya_wap/click/open_app_guide";
-      webUrl = "https://www.huya.com/${detail.value?.roomId}";
-    } else if (site.id == Constant.kDouyu) {
-      naviteUrl =
-          "douyulink://?type=90001&schemeUrl=douyuapp%3A%2F%2Froom%3FliveType%3D0%26rid%3D${detail.value?.roomId}";
-      webUrl = "https://www.douyu.com/${detail.value?.roomId}";
-    }
+    // if (site.id == Constant.kBiliBili) {
+    //   naviteUrl = "bilibili://live/${detail.value?.roomId}";
+    //   webUrl = "https://live.bilibili.com/${detail.value?.roomId}";
+    // } else if (site.id == Constant.kDouyin) {
+    //   var args = detail.value?.roomId;
+    //   naviteUrl = "snssdk1128://webcast_room?room_id=$args";
+    //   webUrl = "https://live.douyin.com/$args";
+    // } else if (site.id == Constant.kHuya) {
+    //   var args = HuyaDanmakuArgs.fromJson(jsonDecode(detail.value!.danmakuData!) as Map<String, dynamic>);
+    //   naviteUrl =
+    //       "yykiwi://homepage/index.html?banneraction=https%3A%2F%2Fdiy-front.cdn.huya.com%2Fzt%2Ffrontpage%2Fcc%2Fupdate.html%3Fhyaction%3Dlive%26channelid%3D${args.subSid}%26subid%3D${args.subSid}%26liveuid%3D${args.subSid}%26screentype%3D1%26sourcetype%3D0%26fromapp%3Dhuya_wap%252Fclick%252Fopen_app_guide%26&fromapp=huya_wap/click/open_app_guide";
+    //   webUrl = "https://www.huya.com/${detail.value?.roomId}";
+    // } else if (site.id == Constant.kDouyu) {
+    //   naviteUrl =
+    //       "douyulink://?messageType=90001&schemeUrl=douyuapp%3A%2F%2Froom%3FliveType%3D0%26rid%3D${detail.value?.roomId}";
+    //   webUrl = "https://www.douyu.com/${detail.value?.roomId}";
+    // }
     try {
       await launchUrlString(naviteUrl, mode: LaunchMode.externalApplication);
     } catch (e) {
@@ -1067,7 +1071,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
     // 重新设置LiveDanmaku
     liveDanmaku = site.liveSite.getDanmaku();
-    rustDanmakuMask.reset();
+    rustDanmakuMask?.reset();
 
     // 停止播放
     await player.stop();
@@ -1120,7 +1124,7 @@ ${error?.stackTrace}''');
 
     liveDanmaku.stop();
     danmakuController = null;
-    rustDanmakuMask.dispose();
+    rustDanmakuMask?.dispose();
     super.onClose();
   }
 }

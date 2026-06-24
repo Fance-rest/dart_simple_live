@@ -37,9 +37,9 @@ import 'package:simple_live_app/services/local_storage_service.dart';
 import 'package:simple_live_app/services/migration_service.dart';
 import 'package:simple_live_app/services/sync_service.dart';
 import 'package:simple_live_app/services/window_service.dart';
-import 'package:simple_live_app/src/rust/frb_generated.dart';
+import 'package:simple_live_app/src/rust/frb_generated.dart' as frb;
 import 'package:simple_live_app/widgets/status/app_loadding_widget.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart' hide Level;
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -48,6 +48,7 @@ void main() async {
   // window(first)->migration->media_kit->Hive->services->start
   // window(second)->open
   await RustLib.init();
+  await frb.RustLib.init();
   await MigrationService.migrateData();
   MediaKit.ensureInitialized();
   await Hive.initFlutter(
@@ -121,6 +122,7 @@ Future initServices() async {
 
 void initCoreLog() {
   //日志信息
+  CoreLog.startRustLog();
   CoreLog.enableLog =
       !kReleaseMode || AppSettingsController.instance.logEnable.value;
   CoreLog.requestLogType = RequestLogType.short;

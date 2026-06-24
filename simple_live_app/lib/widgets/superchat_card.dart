@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simple_live_app/app/app_style.dart';
 import 'package:simple_live_app/app/utils.dart';
 import 'package:simple_live_app/widgets/net_image.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 
 class SuperChatCard extends StatefulWidget {
   final LiveSuperChatMessage message;
@@ -24,7 +24,7 @@ class _SuperChatCardState extends State<SuperChatCard> {
 
   int _remainSeconds() {
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final end = widget.message.endTime.millisecondsSinceEpoch ~/ 1000;
+    final end = widget.message.endTime ~/ 1000;
     int remain = (end - now).clamp(0, 7200);
     return remain;
   }

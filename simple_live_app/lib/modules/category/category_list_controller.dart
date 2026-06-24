@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:simple_live_app/app/controller/base_controller.dart';
 import 'package:simple_live_app/app/sites.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 
 class CategoryListController extends BasePageController<AppLiveCategory> {
   final Site site;
@@ -9,7 +9,7 @@ class CategoryListController extends BasePageController<AppLiveCategory> {
 
   @override
   Future<List<AppLiveCategory>> getData(int page, int pageSize) async {
-    var result = await site.liveSite.getCategores();
+    var result = await site.liveSite.getCategories();
 
     return result.map((e) => AppLiveCategory.fromLiveCategory(e)).toList();
   }

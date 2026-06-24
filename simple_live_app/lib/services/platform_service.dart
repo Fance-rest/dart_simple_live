@@ -9,7 +9,7 @@ import 'package:simple_live_app/app/sites.dart';
 import 'package:simple_live_app/models/account/douyin_user_info.dart';
 import 'package:simple_live_app/requests/common_request.dart';
 import 'package:simple_live_app/services/local_storage_service.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 
 class PlatformService extends GetxService {
   static PlatformService get instance => Get.find<PlatformService>();
@@ -35,32 +35,30 @@ class PlatformService extends GetxService {
   }
 
   void _setDouyinHlsFirst() {
-    _douyinSite.hlsFirst = douyinHlsFirst;
+    // _douyinSite.hlsFirst = douyinHlsFirst;
   }
 
   Future loadDouyinUserInfo() async {
-    if (douyinCookie.isEmpty) return;
-    try {
-      final data = await _douyinSite.getUserInfoByCookie(douyinCookie);
-      if (data.isEmpty) {
-        SmartDialog.showToast("抖音登录已失效，请重新登录");
-        douyinLogout();
-        return;
-      }
-      var info = DouyinUserInfoModel.fromJson(data);
-      douyinName.value = info.nickname!;
-      douyinLogined.value = true;
-      _setDouyinSiteCookie();
-    } catch (e) {
-      SmartDialog.showToast("获取抖音登录用户信息失败，可前往账号管理重试");
-    }
+    // if (douyinCookie.isEmpty) return;
+    // try {
+    //   final data = await _douyinSite.getUserInfoByCookie(douyinCookie);
+    //   if (data.isEmpty) {
+    //     SmartDialog.showToast("抖音登录已失效，请重新登录");
+    //     douyinLogout();
+    //     return;
+    //   }
+    //   var info = DouyinUserInfoModel.fromJson(data);
+    //   douyinName.value = info.nickname!;
+    //   douyinLogined.value = true;
+    //   _setDouyinSiteCookie();
+    // } catch (e) {
+    //   SmartDialog.showToast("获取抖音登录用户信息失败，可前往账号管理重试");
+    // }
   }
 
   void _setDouyinSiteCookie() {
     if (douyinCookie.isEmpty) {
-      _douyinSite.headers.remove("cookie");
-    } else {
-      _douyinSite.headers["cookie"] = douyinCookie;
+      _douyinSite.setCookies(douyinCookie);
     }
   }
 
@@ -84,6 +82,7 @@ class PlatformService extends GetxService {
   }
 
   // ==================== 虎牙 ====================
+  final _huyaSite = (Sites.allSites[Constant.kHuya]!.liveSite as HuyaSite);
 
   static const String defaultHuyaSdkUa =
       "HYSDK(Windows,30000002)_APP(pc_exe&7090000&official)_SDK(trans&2.35.0.5996)";
@@ -98,7 +97,7 @@ class PlatformService extends GetxService {
 
   void _applyHuyaSdkUa() {
     var ua = huyaSdkUa.value.isNotEmpty ? huyaSdkUa.value : defaultHuyaSdkUa;
-    HuyaSite.HYSDK_UA = ua;
+    _huyaSite.setSdkUa(ua);
     Log.i("HuyaSite.HYSDK_UA 已设置: $ua");
   }
 
@@ -116,7 +115,7 @@ class PlatformService extends GetxService {
       huyaSdkUa.value = ua;
       await LocalStorageService.instance
           .setValue(LocalStorageService.kHuyaSdkUa, ua);
-      HuyaSite.HYSDK_UA = ua;
+      _huyaSite.setSdkUa(ua);
       SmartDialog.dismiss();
       SmartDialog.showToast("虎牙配置已更新");
       Log.i("HuyaSite.HYSDK_UA 已更新: $ua");

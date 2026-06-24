@@ -3,7 +3,7 @@ import 'package:remixicon/remixicon.dart';
 import 'package:simple_live_app/app/constant.dart';
 import 'package:simple_live_app/app/controller/app_settings_controller.dart';
 import 'package:simple_live_app/icons/live_icons.dart';
-import 'package:slive_core/slive_core_compat.dart';
+import 'package:slive_core/slive_core.dart';
 
 class Sites {
   static final Map<String, Site> allSites = {
@@ -12,7 +12,7 @@ class Sites {
       iconData: RemixIcons.bilibili_line,
       logo: "assets/images/bilibili_2.png",
       name: "哔哩哔哩",
-      liveSite: BiliBiliSite(),
+      liveSite: BilibiliSite(),
     ),
     Constant.kDouyu: Site(
       id: Constant.kDouyu,
