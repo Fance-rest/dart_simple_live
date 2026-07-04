@@ -11,6 +11,15 @@ class LocalStorageService extends GetxService {
   /// 缩放模式
   static const String kPlayerScaleMode = "ScaleMode";
 
+  /// 用户自定义宽高比
+  static const String kPlayerAspectByUser = "PlayerAspectByUser";
+
+  /// 用户自定义画面宽度
+  static const String kPlayerAspectWidth = "PlayerAspectWidth";
+
+  /// 用户自定义画面高度
+  static const String kPlayerAspectHeight = "PlayerAspectHeight";
+
   /// 网站排序
   static const String kSiteSort = "SiteSort";
 

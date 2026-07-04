@@ -809,6 +809,13 @@ void showPlayerSettings(LiveRoomController controller) {
                   title: const Text("4:3"),
                   visualDensity: VisualDensity.compact,
                 ),
+                RadioListTile(
+                  value: 5,
+                  contentPadding: AppStyle.edgeInsetsH4,
+                  title: Obx(() => Text(
+                      "自定义（${AppSettingsController.instance.aspectWidth.value}:${AppSettingsController.instance.aspectHeight.value}）")),
+                  visualDensity: VisualDensity.compact,
+                ),
               ],
             ),
           ),

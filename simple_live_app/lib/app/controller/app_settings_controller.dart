@@ -16,6 +16,12 @@ class AppSettingsController extends GetxController {
   /// 缩放模式
   var scaleMode = 0.obs;
 
+  var aspectByUser = (16/9).obs;
+
+  var aspectWidth = 16.obs;
+
+  var aspectHeight = 9.obs;
+
   var themeMode = 0.obs;
 
   var firstRun = false;
@@ -97,6 +103,21 @@ class AppSettingsController extends GetxController {
     scaleMode.value = LocalStorageService.instance.getValue(
       LocalStorageService.kPlayerScaleMode,
       0,
+    );
+
+    aspectByUser.value = LocalStorageService.instance.getValue(
+      LocalStorageService.kPlayerAspectByUser,
+      16 / 9,
+    );
+
+    aspectWidth.value = LocalStorageService.instance.getValue(
+      LocalStorageService.kPlayerAspectWidth,
+      16,
+    );
+
+    aspectHeight.value = LocalStorageService.instance.getValue(
+      LocalStorageService.kPlayerAspectHeight,
+      9,
     );
 
     playerVolume.value = LocalStorageService.instance.getValue(
@@ -430,6 +451,30 @@ class AppSettingsController extends GetxController {
     scaleMode.value = value;
     LocalStorageService.instance.setValue(
       LocalStorageService.kPlayerScaleMode,
+      value,
+    );
+  }
+
+  void setAspectByUser(double value) {
+    aspectByUser.value = value;
+    LocalStorageService.instance.setValue(
+      LocalStorageService.kPlayerAspectByUser,
+      value,
+    );
+  }
+
+  void setAspectWidth(int value) {
+    aspectWidth.value = value;
+    LocalStorageService.instance.setValue(
+      LocalStorageService.kPlayerAspectWidth,
+      value,
+    );
+  }
+
+  void setAspectHeight(int value) {
+    aspectHeight.value = value;
+    LocalStorageService.instance.setValue(
+      LocalStorageService.kPlayerAspectHeight,
       value,
     );
   }

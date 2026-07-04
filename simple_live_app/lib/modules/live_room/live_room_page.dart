@@ -253,6 +253,10 @@ class LiveRoomPage extends GetView<LiveRoomController> {
     } else if (AppSettingsController.instance.scaleMode.value == 4) {
       boxFit = BoxFit.contain;
       aspectRatio = 4 / 3;
+    }else if (AppSettingsController.instance.scaleMode.value == 5) {
+      boxFit = BoxFit.contain;
+      double aspectByUser = AppSettingsController.instance.aspectByUser.value;
+      aspectRatio = aspectByUser;
     }
     return Stack(
       children: [
@@ -703,6 +707,11 @@ class LiveRoomPage extends GetView<LiveRoomController> {
               SettingsAction(
                 title: "画面尺寸",
                 onTap: controller.showPlayerSettingsSheet,
+              ),
+              AppStyle.divider,
+              SettingsAction(
+                title: "自定义画面尺寸",
+                onTap: controller.showAspectRatioSheet,
               ),
             ],
           ),

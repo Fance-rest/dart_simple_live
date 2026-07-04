@@ -218,7 +218,12 @@ mixin PlayerStateMixin on PlayerMixin {
     } else if (AppSettingsController.instance.scaleMode.value == 4) {
       boxFit = BoxFit.contain;
       aspectRatio = 4 / 3;
+    } else if (AppSettingsController.instance.scaleMode.value == 5) {
+      boxFit = BoxFit.contain;
+      double aspectByUser = AppSettingsController.instance.aspectByUser.value;
+      aspectRatio = aspectByUser;
     }
+    // todo: 代码复用
     globalPlayerKey.currentState?.update(
       aspectRatio: aspectRatio,
       fit: boxFit,

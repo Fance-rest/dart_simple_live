@@ -821,8 +821,75 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
                     title: const Text("4:3"),
                     visualDensity: VisualDensity.compact,
                   ),
+                  RadioListTile(
+                    value: 5,
+                    title: Obx(() => Text(
+                        "自定义（${AppSettingsController.instance.aspectWidth.value}:${AppSettingsController.instance.aspectHeight.value}）")),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void showAspectRatioSheet() {
+    final widthController = TextEditingController(
+        text: AppSettingsController.instance.aspectWidth.value.toString());
+    final heightController = TextEditingController(
+        text: AppSettingsController.instance.aspectHeight.value.toString());
+    Utils.showBottomSheet(
+      title: "自定义缩放比例",
+      child: Padding(
+        padding: AppStyle.edgeInsetsH16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widthController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "宽",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                AppStyle.hGap12,
+                const Text("x", style: TextStyle(fontSize: 18)),
+                AppStyle.hGap12,
+                Expanded(
+                  child: TextField(
+                    controller: heightController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "高",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            AppStyle.vGap12,
+            TextButton(
+              onPressed: () {
+                final w = int.tryParse(widthController.text) ?? 16;
+                final h = int.tryParse(heightController.text) ?? 9;
+                if (w <= 0 || h <= 0) return;
+                AppSettingsController.instance.setAspectWidth(w);
+                AppSettingsController.instance.setAspectHeight(h);
+                AppSettingsController.instance.setAspectByUser(w / h);
+                AppSettingsController.instance.setScaleMode(5);
+                updateScaleMode();
+                Get.back();
+              },
+              child: const Text("确定"),
             ),
           ],
         ),
