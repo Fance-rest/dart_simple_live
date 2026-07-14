@@ -1,0 +1,68 @@
+name: Build upstream Android TV APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-tv:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out upstream source
+        uses: actions/checkout@v4
+        with:
+          repository: SlotSun/dart_simple_live
+          ref: master
+          path: source
+          fetch-depth: 1
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: gradle
+
+      - name: Create an APK signing key
+        shell: bash
+        run: |
+          keytool -genkeypair -alias tvkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -keystore "$GITHUB_WORKSPACE/source/simple_live_tv_app/android/keystore.jks" \
+            -storepass android -keypass android \
+            -dname "CN=SliveTV Build, OU=Personal, O=Fance-rest, L=CN, ST=CN, C=CN"
+          cat > "$GITHUB_WORKSPACE/source/simple_live_tv_app/android/key.properties" <<EOF
+          storeFile=$GITHUB_WORKSPACE/source/simple_live_tv_app/android/keystore.jks
+          storePassword=android
+          keyPassword=android
+          keyAlias=tvkey
+          EOF
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: source/simple_live_tv_app/pubspec.yaml
+          cache: true
+
+      - name: Resolve packages
+        working-directory: source/simple_live_tv_app
+        run: flutter pub get
+
+      - name: Build split APKs
+        working-directory: source/simple_live_tv_app
+        run: flutter build apk --release --split-per-abi
+
+      - name: Record upstream commit
+        run: git -C source rev-parse HEAD > upstream-commit.txt
+
+      - name: Upload TV APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: android_tv_upstream
+          retention-days: 14
+          path: |
+            source/simple_live_tv_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            source/simple_live_tv_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            source/simple_live_tv_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
+            upstream-commit.txt
